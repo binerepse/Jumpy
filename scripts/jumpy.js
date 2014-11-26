@@ -25,7 +25,7 @@ function init(){
 	document.body.appendChild(renderer.domElement);
 	//CAMERA//
 	camera = new THREE.PerspectiveCamera(45, WIDTH/HEIGHT, 0.1, 20000);
-	camera.position.set(0,0,+7);
+	camera.position.set(0,0,200);
 	scene.add(camera);
 	//RESIZE HANDLING//
 	window.addEventListener('resize', function(){
@@ -41,25 +41,29 @@ function init(){
 	light.position.set(0,0,100);
 	scene.add(light);	
 	//LOAD GEOMETRY//
-	var geometry = new THREE.BoxGeometry(1,1,1);
-	var material = new THREE.MeshPhongMaterial({color: 0x0eff80});
-	cube = new THREE.Mesh(geometry, material);
-	scene.add(cube);
+	var sphereGeometry = new THREE.SphereGeometry(9,32,32);
+	var sphereMaterial = new THREE.MeshPhongMaterial({color: 0xeff80});
+	sphereMaterial.map = THREE.ImageUtils.loadTexture('./earth.gif');
+	sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+	scene.add(sphere);
 }
 
 function animate(){
 	requestAnimationFrame(animate);
-	if( keyboard.pressed("left") ){
-		cube.rotation.y -= 0.1;
-	}
-	if(keyboard.pressed("right")){
-		cube.rotation.y += 0.1;
-	}
-	if(keyboard.pressed("up")){
-		cube.rotation.x -= 0.1;
+	sphere.position.x +=0.1;
+	sphere.rotation.z -=0.5;
+	
+	if( keyboard.pressed("up") ){
+		sphere.position.x +=0.5;	
 	}
 	if(keyboard.pressed("down")){
-		cube.rotation.x += 0.1;
+		cube.position.y -= 0.01;
+	}
+	if(keyboard.pressed("up")){
+		cube.rotation.x -= 0.01;
+	}
+	if(keyboard.pressed("down")){
+		cube.rotation.x += 0.01;
 	}
 	renderer.render(scene, camera);
 	
