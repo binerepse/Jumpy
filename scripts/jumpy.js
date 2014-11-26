@@ -3,14 +3,12 @@ var scene, camera, renderer, cube;
 var keyboard = new THREEx.KeyboardState();
 
 //HOMESCREEN HIDING//
-$("#StartButton").click(function () {
-$("#homescreen").hide();
-$("#canvas").show();
-init();
-animate();
-
-});
-
+function start() {
+	$("#homescreen").hide();
+	$("#canvas").show();
+	init();
+	animate();
+}
 
 function init(){
 	
