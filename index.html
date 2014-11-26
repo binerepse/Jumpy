@@ -1,27 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-	<title>"Jumpy Ball"</title>
-	<link rel="stylesheet" type="text/css" href="./style/jumpy.css"></style>
-	<meta charset="utf-8">
-</head>
-<body <style="margin: 0">
-	<script src="./scripts/three.min.js"></script>
-	<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
-	<script src='./scripts/threex.keyboardstate.js'></script>
-	<script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+	<head>
+		<title>"Jumpy Ball"</title>
+		<link rel="stylesheet" type="text/css" href="./style/jumpy.css">
+		<meta charset="utf-8">
+		<script src="./scripts/three.min.js"></script>
+		<script src="//code.jquery.com/jquery-1.11.0.min.js"></script>
+		<script src='./scripts/threex.keyboardstate.js'></script>
+		<script src="//code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
+		<script src="./scripts/jumpy.js"></script>
+	</head>
+	<body style="margin: 0">
 
-	<div id="homescreen" >
-		<h1>Jumpy Ball</h1 >
-		<div>
-		Space ---> sprememba gravitacije
+		<div id="homescreen">
+			<h1>Jumpy Ball</h1 >
+			<div>
+			Space ---> sprememba gravitacije
+			</div>
+			<input id="StartButton" type="button" value="Start" onclick="start()">
 		</div>
-		<input id="StartButton" type="button" value="Start"/>
-	</div>
 
-	<canvas id="canvas"></canvas>
-	<script src="./scripts/jumpy.js"></script>
-</body>
-	
-</style>
+		<canvas id="canvas"></canvas>
+		
+	</body>
 </html>
