@@ -1,14 +1,19 @@
 var scene, camera, renderer, cube;
+//KEYBOARD
+var keyboard = new THREEx.KeyboardState();
+
 //HOMESCREEN HIDING//
 $("#StartButton").click(function () {
 $("#homescreen").hide();
 $("#canvas").show();
 init();
 animate();
+
 });
-	
+
 
 function init(){
+	
 	//SCENE//
 	scene = new THREE.Scene();
 	var WIDTH = window.innerWidth;
@@ -40,12 +45,22 @@ function init(){
 	var material = new THREE.MeshPhongMaterial({color: 0x0eff80});
 	cube = new THREE.Mesh(geometry, material);
 	scene.add(cube);
-
-
-
 }
 
 function animate(){
 	requestAnimationFrame(animate);
+	if( keyboard.pressed("left") ){
+		cube.rotation.y -= 0.1;
+	}
+	if(keyboard.pressed("right")){
+		cube.rotation.y += 0.1;
+	}
+	if(keyboard.pressed("up")){
+		cube.rotation.x -= 0.1;
+	}
+	if(keyboard.pressed("down")){
+		cube.rotation.x += 0.1;
+	}
 	renderer.render(scene, camera);
+	
 }
