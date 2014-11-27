@@ -13,6 +13,17 @@ var partMax = 150;
 var partMin = 50;
 //KEYBOARD
 var keyboard = new THREEx.KeyboardState();
+var tla = true;
+var tweenUp;
+var tweenDown;
+var tweenUpUp;
+var tweenUpDown;
+var tweenDownUp;
+var tweenDownDown;
+var tweenBullet;
+var sphere;
+var opponent;
+var bullet;
 
 //HOMESCREEN HIDING//
 function start() {
@@ -49,15 +60,75 @@ function init(){
 	//LIGHTING//
 	var hlight = new THREE.HemisphereLight(0x404040, 0x404040, 2); // soft white light
 	scene.add(hlight);	
-	// sphere
-	var sphereGeometry = new THREE.SphereGeometry(9, 32, 32);
-	var sphereTexture = THREE.ImageUtils.loadTexture("./assets/sphere1.png");
-	var sphereMaterial = new THREE.MeshLambertMaterial({map: sphereTexture});
+	//LIGHTING//
+	var light = new THREE.PointLight(0xffffff);
+	light.position.set(0,0,100);
+	scene.add(light);	
+	//LOAD GEOMETRY//
+	//NAS OSEBEK
+	var sphereGeometry = new THREE.SphereGeometry(9,32,32);
+	var sphereMaterial = new THREE.MeshPhongMaterial();
+	sphereMaterial.map = THREE.ImageUtils.loadTexture('./earth.gif');
 	sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
-	sphere.overdraw = true;
-	sphere.position.x = -50;
-	sphere.position.y = 20;
 	scene.add(sphere);
+	//NASPROTNIK
+	var opponentGeometry = new THREE.SphereGeometry(9,32,32);
+	var opponentMaterial = new THREE.MeshPhongMaterial({color: 0xFF0000});
+	opponent = new THREE.Mesh(opponentGeometry, opponentMaterial);
+	scene.add(opponent);
+	//BULLET
+	var bulletGeometry = new THREE.CylinderGeometry(1.5,0.5,8,32);
+	var bulletMaterial = new THREE.MeshPhongMaterial();
+	bullet = new THREE.Mesh(bulletGeometry, bulletMaterial);
+	scene.add(bullet);
+	//ZACETNA POZICIJA METKA
+	bullet.position.x = 100;
+	bullet.position.y = -50;
+	bullet.rotation.z = 4.71;
+	//ZACETNA POZICIJA NASPROTNIKA
+	opponent.position.x = 100;
+	opponent.position.y = -50;
+
+	//ZACETNA POZICIJA KROGLE
+	sphere.position.y = -50;
+	sphere.position.x = -50;
+
+	//ANIMACIJA GRAVITY - UP
+	tweenUp = new TWEEN.Tween(sphere.position);
+	tweenUp.to({x: -50, y: 50}, 200);
+	tweenUp.easing(TWEEN.Easing.Linear.None);
+
+	//ANIMACIJA GRAVITY - DOWN
+	tweenDown = new TWEEN.Tween(sphere.position);
+	tweenDown.to({x: -50, y: -50}, 200);
+	tweenDown.easing(TWEEN.Easing.Linear.None);
+
+	// ANIMACIJA JUMP - UP UP
+	tweenUpUp = new TWEEN.Tween(sphere.position);
+	tweenUpUp.to({x: -50, y: 20}, 350);
+	tweenUpUp.easing(TWEEN.Easing.Quadratic.Out);
+	// ANIMACIJA JUMP - UP DOWN
+	tweenUpDown = new TWEEN.Tween(sphere.position);
+	tweenUpDown.to({x: -50, y:-50}, 350);
+	tweenUpDown.easing(TWEEN.Easing.Quadratic.In);
+	// POVEZAVA UP UP IN UP DOWN
+	tweenUpUp.chain(tweenUpDown);
+	// ANIMACIJA JUMP - DOWN UP
+	tweenDownUp = new TWEEN.Tween(sphere.position);
+	tweenDownUp.to({x: -50, y: -20}, 350);
+	tweenDownUp.easing(TWEEN.Easing.Quadratic.Out);
+	// ANIMACIJA JUMP - DOWN DOWN
+	tweenDownDown = new TWEEN.Tween(sphere.position);
+	tweenDownDown.to({x: -50, y: 50}, 350);
+	tweenDownDown.easing(TWEEN.Easing.Quadratic.In);
+	// POVEZAVA DOWN UP IN DOWN DOWN
+	tweenDownUp.chain(tweenDownDown);
+	// ANIMACIJA METKA
+	tweenBullet = new TWEEN.Tween(bullet.position);
+	tweenBullet.to({x: -1000}, 8000);
+	tweenBullet.easing(TWEEN.Easing.Linear.None);
+	tweenBullet.repeat(Infinity);
+	tweenBullet.start();
 	//CAMERA//
 	camera = new THREE.PerspectiveCamera(45, WIDTH/HEIGHT, 0.1, 1000);
 	camera.position.set(0,0,200);
@@ -163,11 +234,36 @@ function generateTerain() {
 		generateObstacle();
 	}
 }
+
 function animate(){
 	requestAnimationFrame(animate);
-	if( keyboard.pressed("left") ){
-		sphere.position.x -= 1;
-		camera.position.x -= 1;
+	// GRAVITY UP
+	if(keyboard.pressed("up")){
+		tla = false;
+		TWEEN.add(tweenUp);
+		tweenDown.stop();
+		TWEEN.remove(tweenDown);
+		tweenUp.start();
+	}
+	// GRAVITY DOWN
+	if(keyboard.pressed("down")){
+		tla = true;
+		TWEEN.add(tweenDown);
+		tweenUp.stop();
+		TWEEN.remove(tweenUp);
+		tweenDown.start();
+	}
+	// JUMP
+	if(keyboard.pressed("space")){
+		if(tla){
+			TWEEN.removeAll;
+			TWEEN.add(tweenUpUp);
+			tweenUpUp.start();
+		}else{
+			TWEEN.removeAll;
+			TWEEN.add(tweenDownUp);
+			tweenDownUp.start();
+		}
 	}
 	if(keyboard.pressed("right")){
 		sphere.position.x += speed;
@@ -186,6 +282,14 @@ function animate(){
 	}
 	var cLAXPos = (sphere.position.x <= 0) ? 0 : sphere.position.x;
 	camera.lookAt(new THREE.Vector3(cLAXPos, 0, 0));
-	renderer.render(scene, camera);
 	
+	// IZRIS
+	TWEEN.update();
+	// SPREMEMBA SMERI ROTACIJE
+	if(tla){
+		sphere.rotation.z -=0.4;
+	}else{
+		sphere.rotation.z +=0.4;
+	}
+	renderer.render(scene, camera);
 }
