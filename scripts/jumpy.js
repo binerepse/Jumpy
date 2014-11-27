@@ -153,9 +153,6 @@ function animate(){
 			tweenDownUp.start();
 		}
 	}
-	if(keyboard.pressed("left")){
-		bullet.position.x -=2;
-	}
 	// IZRIS
 	TWEEN.update();
 	// SPREMEMBA SMERI ROTACIJE
