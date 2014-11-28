@@ -15,8 +15,14 @@ var partMin = 50;
 var keyboard = new THREEx.KeyboardState();
 var zacetekSkoka = 0;
 var konecSkoka = 0 ;
+var zacetekSpremembeGravitacijeGor = 0;
+var konecSpremembeGravitacijeGor = 0;
+var zacetekSpremembeGravitacijeDol = 0;
+var konecSpremembeGravitacijeDol = 0;
 var tla = true;
 var vSkoku = false;
+var vSpremembiGravitacijeGor = false;
+var vSpremembiGravitacijeDol = false;
 var tweenUp;
 var tweenDown;
 var tweenUpUp;
@@ -242,25 +248,38 @@ function generateTerain() {
 function animate(){
 	requestAnimationFrame(animate);
 	// GRAVITY UP
-	if(keyboard.pressed("up") && tla != false){
+	if(keyboard.pressed("up") && tla != false && !vSkoku && !vSpremembiGravitacijeDol){
 		tla = false;
 		TWEEN.add(tweenUp);
 		tweenDown.stop();
 		TWEEN.remove(tweenDown);
 		tweenUp.start();
+		vSpremembiGravitacijeGor = true;
+		zacetekSpremembeGravitacijeGor = parseInt((new Date()).getTime());
 	}
 	// GRAVITY DOWN
-	if(keyboard.pressed("down") && tla != true){
+	if(keyboard.pressed("down") && tla != true && !vSkoku && !vSpremembiGravitacijeGor){
 		tla = true;
 		TWEEN.add(tweenDown);
 		tweenUp.stop();
 		TWEEN.remove(tweenUp);
 		tweenDown.start();
+		vSpremembiGravitacijeDol = true;
+		zacetekSpremembeGravitacijeDol = parseInt((new Date()).getTime());
 	}
 	// JUMP
+	konecSpremembeGravitacijeDol = parseInt((new Date()).getTime());
+	konecSpremembeGravitacijeGor = parseInt((new Date()).getTime());
+	deltaGor = konecSpremembeGravitacijeGor - zacetekSpremembeGravitacijeGor;
+	deltaDol = konecSpremembeGravitacijeDol - zacetekSpremembeGravitacijeDol;
+	if(deltaGor > 220){
+		vSpremembiGravitacijeGor = false;
+	}
+	if(deltaDol > 220){
+		vSpremembiGravitacijeDol = false;
+	}
 	
-	
-	if(keyboard.pressed("space") && !vSkoku){
+	if(keyboard.pressed("space") && !vSkoku && !vSpremembiGravitacijeDol && !vSpremembiGravitacijeGor){
 		if(tla){
 			TWEEN.removeAll;
 			TWEEN.add(tweenUpUp);
@@ -299,7 +318,6 @@ function animate(){
 	var cLAXPos = (sphere.position.x <= 0) ? 0 : sphere.position.x;
 	camera.lookAt(new THREE.Vector3(cLAXPos, 0, 0));
 	
-	console.log(razlika);
 	// IZRIS
 	TWEEN.update();
 
