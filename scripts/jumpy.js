@@ -13,7 +13,10 @@ var partMax = 150;
 var partMin = 50;
 //KEYBOARD
 var keyboard = new THREEx.KeyboardState();
+var zacetekSkoka = 0;
+var konecSkoka = 0 ;
 var tla = true;
+var vSkoku = false;
 var tweenUp;
 var tweenDown;
 var tweenUpUp;
@@ -24,6 +27,7 @@ var tweenBullet;
 var sphere;
 var opponent;
 var bullet;
+
 
 //HOMESCREEN HIDING//
 function start() {
@@ -95,37 +99,37 @@ function init(){
 
 	//ANIMACIJA GRAVITY - UP
 	tweenUp = new TWEEN.Tween(sphere.position);
-	tweenUp.to({x: -50, y: 50}, 200);
+	tweenUp.to({y: "+100"}, 200);
 	tweenUp.easing(TWEEN.Easing.Linear.None);
 
 	//ANIMACIJA GRAVITY - DOWN
 	tweenDown = new TWEEN.Tween(sphere.position);
-	tweenDown.to({x: -50, y: -50}, 200);
+	tweenDown.to({y: "-100"}, 200);
 	tweenDown.easing(TWEEN.Easing.Linear.None);
 
 	// ANIMACIJA JUMP - UP UP
 	tweenUpUp = new TWEEN.Tween(sphere.position);
-	tweenUpUp.to({x: -50, y: 20}, 350);
+	tweenUpUp.to({y: "+70"}, 350);
 	tweenUpUp.easing(TWEEN.Easing.Quadratic.Out);
 	// ANIMACIJA JUMP - UP DOWN
 	tweenUpDown = new TWEEN.Tween(sphere.position);
-	tweenUpDown.to({x: -50, y:-50}, 350);
+	tweenUpDown.to({y:"-70"}, 350);
 	tweenUpDown.easing(TWEEN.Easing.Quadratic.In);
 	// POVEZAVA UP UP IN UP DOWN
 	tweenUpUp.chain(tweenUpDown);
 	// ANIMACIJA JUMP - DOWN UP
 	tweenDownUp = new TWEEN.Tween(sphere.position);
-	tweenDownUp.to({x: -50, y: -20}, 350);
+	tweenDownUp.to({y: "-70"}, 350);
 	tweenDownUp.easing(TWEEN.Easing.Quadratic.Out);
 	// ANIMACIJA JUMP - DOWN DOWN
 	tweenDownDown = new TWEEN.Tween(sphere.position);
-	tweenDownDown.to({x: -50, y: 50}, 350);
+	tweenDownDown.to({y: "+70"}, 350);
 	tweenDownDown.easing(TWEEN.Easing.Quadratic.In);
 	// POVEZAVA DOWN UP IN DOWN DOWN
 	tweenDownUp.chain(tweenDownDown);
 	// ANIMACIJA METKA
 	tweenBullet = new TWEEN.Tween(bullet.position);
-	tweenBullet.to({x: -1000}, 8000);
+	tweenBullet.to({x: "-1000"}, 8000);
 	tweenBullet.easing(TWEEN.Easing.Linear.None);
 	tweenBullet.repeat(Infinity);
 	tweenBullet.start();
@@ -238,7 +242,7 @@ function generateTerain() {
 function animate(){
 	requestAnimationFrame(animate);
 	// GRAVITY UP
-	if(keyboard.pressed("up")){
+	if(keyboard.pressed("up") && tla != false){
 		tla = false;
 		TWEEN.add(tweenUp);
 		tweenDown.stop();
@@ -246,7 +250,7 @@ function animate(){
 		tweenUp.start();
 	}
 	// GRAVITY DOWN
-	if(keyboard.pressed("down")){
+	if(keyboard.pressed("down") && tla != true){
 		tla = true;
 		TWEEN.add(tweenDown);
 		tweenUp.stop();
@@ -254,16 +258,28 @@ function animate(){
 		tweenDown.start();
 	}
 	// JUMP
-	if(keyboard.pressed("space")){
+	
+	
+	if(keyboard.pressed("space") && !vSkoku){
 		if(tla){
 			TWEEN.removeAll;
 			TWEEN.add(tweenUpUp);
 			tweenUpUp.start();
+			vSkoku = true;
+			zacetekSkoka = parseInt((new Date()).getTime());
+
 		}else{
 			TWEEN.removeAll;
 			TWEEN.add(tweenDownUp);
 			tweenDownUp.start();
+			vSkoku = true;
+			zacetekSkoka = parseInt((new Date()).getTime());
 		}
+	}
+	konecSkoka = parseInt((new Date()).getTime());
+	razlika = konecSkoka - zacetekSkoka;
+	if(razlika > 720){
+		vSkoku = false;
 	}
 	if(keyboard.pressed("right")){
 		sphere.position.x += speed;
@@ -283,8 +299,10 @@ function animate(){
 	var cLAXPos = (sphere.position.x <= 0) ? 0 : sphere.position.x;
 	camera.lookAt(new THREE.Vector3(cLAXPos, 0, 0));
 	
+	console.log(razlika);
 	// IZRIS
 	TWEEN.update();
+
 	// SPREMEMBA SMERI ROTACIJE
 	if(tla){
 		sphere.rotation.z -=0.4;
