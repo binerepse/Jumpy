@@ -1,16 +1,23 @@
 // Global variables
-var scene, camera, renderer, sphere, floor, ceiling, pLight, bg;
-var floorPartLen = 0;
-var ceilingPartLen = 0;
+var scene, camera, renderer, sphere, platformMesh, ceilingPlatform, pLight, bg;
+var gapFExists = false;
+var gapCExists = false;
+var gapFStartX = 0;
+var gapFEndX = 0;
+var gapCStartX = 0;
+var gapCEndX = 0;
 var xPosG = 0;
 var xPosC = 0;
-var xPosBG = 0;
 var cameraXPos = 0;
 var speed = 10;
-var gapMax = 70;
-var gapMin = 20;
-var partMax = 150;
-var partMin = 50;
+var objectRot = 0.2;
+var gapLength = speed * 50;
+var partLength = 250;
+var firstGenerat = true;
+var runGame = false;
+var obstacleXposPrev = 0;
+var worldGroup = new THREE.Group();
+var xPosArray = [];
 //KEYBOARD
 var keyboard = new THREEx.KeyboardState();
 var zacetekSkoka = 0;
@@ -30,7 +37,6 @@ var tweenUpDown;
 var tweenDownUp;
 var tweenDownDown;
 var tweenBullet;
-var sphere;
 var opponent;
 var bullet;
 
@@ -46,6 +52,7 @@ window.onload = function() {
 	$("#canvas").show();
 	init();
 	generateTerain();
+	generateObstacle();
 	animate();
 }
 
@@ -60,13 +67,6 @@ function init(){
 	renderer = new THREE.WebGLRenderer({canvas : canvas, antialias: true});
 	renderer.setSize(WIDTH,HEIGHT);
 	document.body.appendChild(renderer.domElement);
-	// Background
-	var bgTexture = THREE.ImageUtils.loadTexture("./assets/background.jpg");
-	var geometry = new THREE.PlaneGeometry( 640, 512);
-	var material = new THREE.MeshBasicMaterial( {map: bgTexture} );
-	bg = new THREE.Mesh( geometry, material );
-	bg.position.set(0, -55, -15);
-	scene.add(bg);
 	//LIGHTING//
 	var hlight = new THREE.HemisphereLight(0x404040, 0x404040, 2); // soft white light
 	scene.add(hlight);	
@@ -78,7 +78,7 @@ function init(){
 	//NAS OSEBEK
 	var sphereGeometry = new THREE.SphereGeometry(9,32,32);
 	var sphereMaterial = new THREE.MeshPhongMaterial();
-	sphereMaterial.map = THREE.ImageUtils.loadTexture('./earth.gif');
+	sphereMaterial.map = THREE.ImageUtils.loadTexture('./assets/earth.gif');
 	sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
 	scene.add(sphere);
 	//NASPROTNIK
@@ -141,7 +141,9 @@ function init(){
 	tweenBullet.start();
 	//CAMERA//
 	camera = new THREE.PerspectiveCamera(45, WIDTH/HEIGHT, 0.1, 1000);
-	camera.position.set(0,0,200);
+	camera.position.set(-150,0,200);
+	var cLAXPos = sphere.position.x;
+	camera.lookAt(new THREE.Vector3(cLAXPos, 0, 0));
 	scene.add(camera);
 	//RESIZE HANDLING/
 	window.addEventListener('resize', function(){
@@ -152,99 +154,144 @@ function init(){
 		camera.updateProjectionMatrix(); 
 	});
 }
-function generateFloor() {
-	var cHeight = $("#canvas").attr("height");
-	var gap = Math.random();
-	// make gap in ground
-	if(gap > 0.5) {
-		xPosG += floorPartLen + Math.round(Math.random() * gapMax + gapMin);
+
+function generateTerain() {	
+	for(var j = 0; j < 60; j++) { 
+		// Platform part
+		// Platform geometry
+		var platformGeometry = new THREE.BoxGeometry(partLength, 10, 30);
+		// Faces textures
+		var platformTextureT = THREE.ImageUtils.loadTexture("./assets/groundT.png");
+		var platformTextureF = THREE.ImageUtils.loadTexture("./assets/groundF.png");
+		var platformTextureS = THREE.ImageUtils.loadTexture("./assets/groundS.png");
+		var platformTextureB = THREE.ImageUtils.loadTexture("./assets/groundB.png");
+		// Faces materials
+		var materialsG = [];
+		materialsG.push(new THREE.MeshLambertMaterial({ map: platformTextureS })); // right face
+		materialsG.push(new THREE.MeshLambertMaterial({ map: platformTextureS })); // left face
+		materialsG.push(new THREE.MeshLambertMaterial({ map: platformTextureT })); // top face
+		materialsG.push(new THREE.MeshLambertMaterial({ map: platformTextureB })); // bottom face
+		materialsG.push(new THREE.MeshLambertMaterial({ map: platformTextureF })); // front face
+		materialsG.push(new THREE.MeshLambertMaterial({ map: platformTextureF })); // back face
+		var platformMaterial = new THREE.MeshFaceMaterial(materialsG);
+		// platform mesh
+		platformMesh = new THREE.Mesh(platformGeometry, platformMaterial);
+		// get positions 		
+		if(firstGenerat) { 
+			for(var i = -550 + partLength; i <= 200; i += partLength) {
+				var temp = platformMesh.clone();
+				temp.position.x = i;
+				temp.position.y = -64;
+				temp.matrixAutoUpdate = false;
+				temp.updateMatrix();
+				worldGroup.add(temp);
+				temp = platformMesh.clone();
+				temp.position.x = i;
+				temp.position.y = 64;
+				temp.matrixAutoUpdate = false;
+				temp.updateMatrix();
+				worldGroup.add(temp);
+			}
+			firstGenerat = false;
+			xPosC = 200;
+			xPosG = 200;
+		}
+		else {
+			var gapF = Math.random();
+			// make gap in ground
+			if(gapF > 0.5 && !gapFExists) {
+				gapFExists = true;
+				gapFstartX = xPosG + partLength / 2;
+				xPosG += partLength + gapLength;
+				xPosArray.push({xPos: xPosG, yPos: -44});
+				gapFEndX = xPosG - partLength / 2;
+				for(var gapI = xPosC; gapI < gapFEndX; gapI += partLength) {
+					xPosC = gapI;
+					// CeilingPlatform mesh
+					var temp = platformMesh.clone();
+					// CeilingPlatform position
+					temp.position.x = xPosC;
+					temp.position.y = 64;
+					// Add ceilingPlatform to scene
+					temp.matrixAutoUpdate = false;
+					temp.updateMatrix();
+					worldGroup.add(temp);
+					xPosArray.push({xPos: xPosC, yPos: 44});
+				}
+			}
+			else {
+				gapFExists = false;
+				xPosG += partLength;
+				xPosArray.push({xPos: xPosG, yPos: -44});
+				// FloorPlatform mesh
+				var temp = platformMesh.clone();
+				// FloorPlatform position
+				temp.position.x = xPosG;
+				temp.position.y = -64;
+				temp.matrixAutoUpdate = false;
+				temp.updateMatrix();
+				worldGroup.add(temp);
+			}
+			var gapC = Math.random();
+			// make gap in ceiling
+			if(gapC > 0.5 && !gapCExists) {
+				gapCExists = true;
+				gapCstartX = xPosC + partLength / 2;
+				xPosC += partLength + gapLength;
+				xPosArray.push({xPos: xPosC, yPos: 44});
+				gapCEndX = xPosC - partLength / 2;
+				for(var gapI = xPosG; gapI < gapCEndX; gapI += partLength) {
+					xPosG = gapI;
+					// FloorPlatform mesh
+					var temp = platformMesh.clone();
+					// FloorPlatform position
+					temp.position.x = xPosG;
+					temp.position.y = -64;
+					temp.matrixAutoUpdate = false;
+					temp.updateMatrix();
+					worldGroup.add(temp);
+					xPosArray.push({xPos: xPosG, yPos: -44});
+				}
+			}
+			else {
+				gapCExists = false;
+				xPosC += partLength;
+				xPosArray.push({xPos: xPosC, yPos: 44});
+				// CeilingPlatform mesh
+				var temp = platformMesh.clone();
+				// CeilingPlatform position
+				temp.position.x = xPosC;
+				temp.position.y = 64;
+				temp.matrixAutoUpdate = false;
+				temp.updateMatrix();
+				worldGroup.add(temp);
+			}
+		}
 	}
-	else {
-		xPosG += floorPartLen;
-	}
-	floorPartLen = Math.round(Math.random() * partMax + partMin);
-	// Floor part
-	// faces textures
-	var floorGeometry = new THREE.BoxGeometry(floorPartLen, 10, 30);
-	var floorTextureT = THREE.ImageUtils.loadTexture("./assets/groundT.png");
-	var floorTextureF = THREE.ImageUtils.loadTexture("./assets/groundF.png");
-	var floorTextureS = THREE.ImageUtils.loadTexture("./assets/groundS.png");
-	var floorTextureB = THREE.ImageUtils.loadTexture("./assets/groundB.png");
-	// faces materials
-	var materials = [];
-	materials.push(new THREE.MeshLambertMaterial({ map: floorTextureS })); // right face
-	materials.push(new THREE.MeshLambertMaterial({ map: floorTextureS })); // left face
-	materials.push(new THREE.MeshLambertMaterial({ map: floorTextureT })); // top face
-	materials.push(new THREE.MeshLambertMaterial({ map: floorTextureB })); // bottom face
-	materials.push(new THREE.MeshLambertMaterial({ map: floorTextureF })); // front face
-	materials.push(new THREE.MeshLambertMaterial({ map: floorTextureF })); // back face
-	var floorMaterial = new THREE.MeshFaceMaterial(materials);
-	floor = new THREE.Mesh(floorGeometry, floorMaterial);
-	floor.position.set(xPosG, -64 , 1);
-	scene.add(floor);
+	generateObstacle();
+	scene.add(worldGroup);
 }
-function generateCeiling() {
-var cHeight = $("#canvas").attr("height");
-	var gap = Math.random();
-	// make gap in ground
-	if(gap > 0.5) {
-		xPosC += ceilingPartLen + Math.round(Math.random() * gapMax + gapMin);
-	}
-	else {
-		xPosC += ceilingPartLen;
-	}
-	ceilingPartLen = Math.round(Math.random() * partMax + partMin);
-	// ceiling part
-	var ceilingGeometry = new THREE.BoxGeometry(ceilingPartLen, 10, 30);
-	var ceilingTexture = THREE.ImageUtils.loadTexture("./assets/groundT.png");
-	var materials = [];
-	materials.push(new THREE.MeshLambertMaterial({ map: ceilingTexture })); // right face
-	materials.push(new THREE.MeshLambertMaterial({ map: ceilingTexture })); // left face
-	materials.push(new THREE.MeshLambertMaterial({ map: ceilingTexture })); // top face
-	materials.push(new THREE.MeshLambertMaterial({ map: ceilingTexture })); // bottom face
-	materials.push(new THREE.MeshLambertMaterial({ map: ceilingTexture })); // front face
-	materials.push(new THREE.MeshLambertMaterial({ map: ceilingTexture })); // back face
-	var ceilingMaterial = new THREE.MeshFaceMaterial(materials);
-	ceiling = new THREE.Mesh(ceilingGeometry, ceilingMaterial);
-	ceiling.position.set(xPosC, 64, 0);
-	scene.add(ceiling);
-}
+
 function generateObstacle() {
 	var makeObstacle = Math.random();
 	if(makeObstacle > 0.64) {
-		
-		var place = Math.random();
-		var obstacleY, obstacleX, radiusB, radiusT;
-		// position obstacle for ground part
-		if(place > 0.5) {
-			obstacleY = floor.position.y + 30;
-			obstacleX = Math.round(Math.random() * (xPosG + floorPartLen) + xPosG);
-			radiusB = 15;
-			radiusT = 0.1;
-		} // position obstacle for ceiling part
-		else {
-			obstacleY = ceiling.position.y - 30;
-			obstacleX = Math.round(Math.random() * (xPosC + ceilingPartLen) + xPosC);
-			radiusB = 0.1;
-			radiusT = 15;
+		if(xPosArray.length > 0) {
+			var obstacleGeometry = new THREE.BoxGeometry(30, 30, 30);
+			var obstacleTexture = THREE.ImageUtils.loadTexture("./assets/obstacle.png");
+			var obstacleMaterial = new THREE.MeshLambertMaterial({map: obstacleTexture});
+			var obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
+			for(var i = 0; i < 30; i++) {
+				console.log("obstacle");
+				var index = Math.floor(Math.random() * xPosArray.length);
+				var el = xPosArray.splice(index, 1);
+				console.log(el[0]);
+				var temp = obstacle.clone();
+				temp.position.set(el[0].xPos, el[0].yPos, 0);
+				worldGroup.add(obstacle);
+			}
 		}
-		var obstacleH = Math.round(Math.random() * 50 + 40);
-		var obstacleGeometry = new THREE.CylinderGeometry(radiusT, radiusB, obstacleH, 20);
-		var obstacleTexture = THREE.ImageUtils.loadTexture("./assets/obstacle.png");
-		var obstacleMaterial = new THREE.MeshLambertMaterial({map: obstacleTexture});
-		var obstacle = new THREE.Mesh(obstacleGeometry, obstacleMaterial);
-		obstacle.position.set(obstacleX, obstacleY, 0);
-		scene.add(obstacle);
 	}
 }
-function generateTerain() {
-	for(var i = 0; i < 60; i++) {
-		generateFloor();
-		generateCeiling();
-		generateObstacle();
-	}
-}
-
 function animate(){
 	requestAnimationFrame(animate);
 	// GRAVITY UP
@@ -280,6 +327,7 @@ function animate(){
 	}
 	
 	if(keyboard.pressed("space") && !vSkoku && !vSpremembiGravitacijeDol && !vSpremembiGravitacijeGor){
+		console.log("sphere jump x: "+worldGroup.position.x);
 		if(tla){
 			TWEEN.removeAll;
 			TWEEN.add(tweenUpUp);
@@ -300,32 +348,38 @@ function animate(){
 	if(razlika > 720){
 		vSkoku = false;
 	}
+	if(keyboard.pressed("left")){
+		worldGroup.position.x -= speed;
+	}
 	if(keyboard.pressed("right")){
-		sphere.position.x += speed;
-		if (sphere.position.x > 15 * speed)	camera.position.x += speed;
+		worldGroup.position.x += speed;
 	}
 	if(keyboard.pressed("a")){
-		camera.position.y -= 1;
+		camera.position.z -= 1;
+		camera.position.x -= 1;
+		camera.lookAt(new THREE.Vector3(sphere.position.x, 0, 0));
 	}
 	if(keyboard.pressed("d")){
-		camera.position.y += 1;
+		camera.position.z += 1;
 		camera.position.x += 1;
+		camera.lookAt(new THREE.Vector3(sphere.position.x, 0, 0));
 	}
 	
 	if(Math.round(sphere.position.x) >=  xPosG - 2000) {
-		generateTerain();
+		//generateTerain();
 	}
-	var cLAXPos = (sphere.position.x <= 0) ? 0 : sphere.position.x;
-	camera.lookAt(new THREE.Vector3(cLAXPos, 0, 0));
-	
 	// IZRIS
 	TWEEN.update();
-
-	// SPREMEMBA SMERI ROTACIJE
-	if(tla){
-		sphere.rotation.z -=0.4;
-	}else{
-		sphere.rotation.z +=0.4;
+	// start game animation
+	if(runGame) {
+		sphere.position.x += speed;
+		camera.position.x += speed;
+		// SPREMEMBA SMERI ROTACIJE
+		if(tla){
+			sphere.rotation.z -= objectRot;
+		}else{
+			sphere.rotation.z += objectRot;
+		}
 	}
 	renderer.render(scene, camera);
 }
