@@ -23,6 +23,7 @@ var tla = true;
 var vSkoku = false;
 var vSpremembiGravitacijeGor = false;
 var vSpremembiGravitacijeDol = false;
+//ANIMACIJE
 var tweenUp;
 var tweenDown;
 var tweenUpUp;
@@ -30,9 +31,15 @@ var tweenUpDown;
 var tweenDownUp;
 var tweenDownDown;
 var tweenBullet;
+//OBJEKTI//
 var sphere;
 var opponent;
 var bullet;
+var strel;
+//ZVOKOVI //
+var whiteNoise;
+var gravity;
+var alienSound;
 
 
 //HOMESCREEN HIDING//
@@ -73,12 +80,17 @@ function init(){
 	//LIGHTING//
 	var light = new THREE.PointLight(0xffffff);
 	light.position.set(0,0,100);
-	scene.add(light);	
+	scene.add(light);
+	//SOUNDS//
+	strel = new Audio("./sounds/strel.wav");
+	whiteNoise = new Audio("./sounds/whitenoise.wav");
+	gravity = new Audio("./sounds/gravity.wav");
+	alienSound = new Audio("./sounds/space.wav");
 	//LOAD GEOMETRY//
 	//NAS OSEBEK
 	var sphereGeometry = new THREE.SphereGeometry(9,32,32);
 	var sphereMaterial = new THREE.MeshPhongMaterial();
-	sphereMaterial.map = THREE.ImageUtils.loadTexture('./earth.gif');
+	sphereMaterial.map = THREE.ImageUtils.loadTexture('./assets/earth.gif');
 	sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
 	scene.add(sphere);
 	//NASPROTNIK
@@ -244,9 +256,11 @@ function generateTerain() {
 		generateObstacle();
 	}
 }
-
 function animate(){
 	requestAnimationFrame(animate);
+	whiteNoise.play();
+	alienSound.play();
+	alienSound.volume = 0.5;
 	// GRAVITY UP
 	if(keyboard.pressed("up") && tla != false && !vSkoku && !vSpremembiGravitacijeDol){
 		tla = false;
@@ -254,8 +268,10 @@ function animate(){
 		tweenDown.stop();
 		TWEEN.remove(tweenDown);
 		tweenUp.start();
+		gravity.play();
 		vSpremembiGravitacijeGor = true;
 		zacetekSpremembeGravitacijeGor = parseInt((new Date()).getTime());
+		
 	}
 	// GRAVITY DOWN
 	if(keyboard.pressed("down") && tla != true && !vSkoku && !vSpremembiGravitacijeGor){
@@ -264,8 +280,10 @@ function animate(){
 		tweenUp.stop();
 		TWEEN.remove(tweenUp);
 		tweenDown.start();
+		gravity.play();
 		vSpremembiGravitacijeDol = true;
 		zacetekSpremembeGravitacijeDol = parseInt((new Date()).getTime());
+		
 	}
 	// JUMP
 	konecSpremembeGravitacijeDol = parseInt((new Date()).getTime());
