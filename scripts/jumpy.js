@@ -260,7 +260,7 @@ function animate(){
 	requestAnimationFrame(animate);
 	whiteNoise.play();
 	alienSound.play();
-	alienSound.volume = 0.5;
+	alienSound.volume = 0.3;
 	// GRAVITY UP
 	if(keyboard.pressed("up") && tla != false && !vSkoku && !vSpremembiGravitacijeDol){
 		tla = false;
