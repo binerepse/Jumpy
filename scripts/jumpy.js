@@ -317,6 +317,8 @@ function animate(){
 		tweenDown.stop();
 		TWEEN.remove(tweenDown);
 		tweenUp.start();
+		gravity.pause();
+		gravity.currentTime = 0;
 		gravity.play();
 		vSpremembiGravitacijeGor = true;
 		zacetekSpremembeGravitacijeGor = parseInt((new Date()).getTime());
@@ -329,6 +331,8 @@ function animate(){
 		tweenUp.stop();
 		TWEEN.remove(tweenUp);
 		tweenDown.start();
+		gravity.pause();
+		gravity.currentTime = 0;
 		gravity.play();
 		vSpremembiGravitacijeDol = true;
 		zacetekSpremembeGravitacijeDol = parseInt((new Date()).getTime());
